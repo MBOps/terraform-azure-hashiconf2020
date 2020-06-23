@@ -1,6 +1,6 @@
-variable "prefix" {
+variable "resource_prefix" {
   description = "The prefix used for all resources in this example"
-  default     = "toa"
+  default     = "mbops"
 }
 
 variable "location" {
