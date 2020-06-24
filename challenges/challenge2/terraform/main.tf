@@ -56,21 +56,21 @@ resource "azurerm_app_service" "webapp" {
 
 # Azure SQL
 
-resource “azurerm_storage_account” “storage” {
-  name                     = replace(lower(“${var.resource_prefix}-storage”), “-“, “”)
+resource "azurerm_storage_account" "storage" {
+  name                     = replace(lower("${var.resource_prefix}-storage"), "-", "")
   location                 = azurerm_resource_group.rg.location
   resource_group_name      = azurerm_resource_group.rg.name
-  account_tier             = “Standard”
-  account_replication_type = “LRS”
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
 }
 
-resource “azurerm_sql_server” “SQL” {
-  name                         = lower(“${var.resource_prefix}-SQL”)
+resource "azurerm_sql_server" "SQL" {
+  name                         = lower("${var.resource_prefix}-SQL")
   location                     = azurerm_resource_group.rg.location
   resource_group_name          = azurerm_resource_group.rg.name
-  version                      = “12.0”
-  administrator_login          = “mradministrator”
-  administrator_login_password = “thisIsDog11”
+  version                      = "12.0"
+  administrator_login          = var.mssql_user
+  administrator_login_password = var.mssql_password
 
   extended_auditing_policy {
     storage_endpoint                        = azurerm_storage_account.storage.primary_blob_endpoint
@@ -100,6 +100,12 @@ resource “azurerm_container_group” “ACI” {
       port     = 27017
       protocol = “TCP”
     }
+
+    environment_variables = {
+      MONGODB_USERNAME = var.mongodb_user
+      MONGODB_PASSWORD = var.mongodb_password
+    }
+
   }
 
 }
