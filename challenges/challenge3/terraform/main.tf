@@ -1,5 +1,12 @@
 # Deploy sample app on Azure App Services in a standalone manner, no database required.
-
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "GitHubActions"
+    storage_account_name = "githubactionsmbops"
+    container_name       = "tfstate"
+    key                  = "challenge.terraform.tfstate"
+  }
+}
 # Configure the AzureRM provider (using v2.1)
 provider "azurerm" {
     version         = "~>2.14.0"
@@ -28,7 +35,7 @@ resource "azurerm_app_service_plan" "asp" {
 
 # Provision the Azure App Service to host the main web site
 resource "azurerm_app_service" "webapp" {
-    name                = "${var.resource_prefix}-WebApp"
+    name                = "${var.resource_prefix}-webapp"
     location            = azurerm_resource_group.rg.location
     resource_group_name = azurerm_resource_group.rg.name
     app_service_plan_id = azurerm_app_service_plan.asp.id
@@ -123,11 +130,5 @@ resource "azurerm_container_group" "ACI" {
 
   }
 
-}
-
-resource "null_resource" "run-script" {
-  provisioner "local-exec" {
-    command = "az webapp deployment source config --branch ${var.branch} --manual-integration --name ${azurerm_app_service.webapp.name} --repo-url ${var.repo_url} --resource-group ${azurerm_resource_group.rg.name}"
-  }
 }
 
