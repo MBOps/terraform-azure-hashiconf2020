@@ -106,7 +106,7 @@ resource "azurerm_container_group" "ACI" {
   os_type             = "Linux"
   
   container {
-    name   = "${var.resource_prefix}-mongodb"
+    name   = lower("${var.resource_prefix}-mongodb")
     image  = "mongo:latest"
     cpu    = "0.5"
     memory = "1.5"
