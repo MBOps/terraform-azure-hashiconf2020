@@ -46,8 +46,8 @@ resource "azurerm_app_service" "webapp" {
         "WEBSITE_NODE_DEFAULT_VERSION"  = "10.15.2"
         "ApiUrl"                        = "/api/v1"
         "ApiUrlShoppingCart"            = "/api/v1"
-        "MongoConnectionString"         = ""
-        "SqlConnectionString"           = ""
+        "MongoConnectionString"         = "mongodb://${var.mongodb_user}:${var.mongodb_password}@${azurerm_container_group.ACI.fqdn}:27017"
+        "SqlConnectionString"           = "Server=tcp:${azurerm_sql_server.mssql.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_sql_database.mssqldb.name};Persist Security Info=False;User ID=${var.mssql_user};Password=${var.mssql_password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
         "productImagesUrl"              = "https://raw.githubusercontent.com/microsoft/TailwindTraders-Backend/master/Deploy/tailwindtraders-images/product-detail"
         "Personalizer__ApiKey"          = ""
         "Personalizer__Endpoint"        = ""
@@ -64,7 +64,7 @@ resource "azurerm_storage_account" "storage" {
   account_replication_type = "LRS"
 }
 
-resource "azurerm_sql_server" "SQL" {
+resource "azurerm_sql_server" "mssql" {
   name                         = lower("${var.resource_prefix}-SQL")
   location                     = azurerm_resource_group.rg.location
   resource_group_name          = azurerm_resource_group.rg.name
@@ -80,25 +80,40 @@ resource "azurerm_sql_server" "SQL" {
   }
 }
 
+resource "azurerm_sql_database" "mssqldb" {
+  name                = "${var.resource_prefix}-DB"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  server_name         = azurerm_sql_server.mssql.name
+}
+
+resource "azurerm_sql_firewall_rule" "mssqlfirewall" {
+  name                = "AzureAccess"
+  resource_group_name = azurerm_resource_group.rg.name
+  server_name         = azurerm_sql_server.mssql.name
+  start_ip_address    = "0.0.0.0"
+  end_ip_address      = "0.0.0.0"
+}
+
 # Azure Container Instance : MongoDB
 
-resource “azurerm_container_group” “ACI” {
-  name                = “${var.resource_prefix}-ACI”
+resource "azurerm_container_group" "ACI" {
+  name                = "${var.resource_prefix}-ACI"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  ip_address_type     = “public”
-  dns_name_label      = “mongodb”
-  os_type             = “Linux”
+  ip_address_type     = "public"
+  dns_name_label      = "mongodb"
+  os_type             = "Linux"
   
   container {
-    name   = “mongodb”
-    image  = “mongo:latest”
-    cpu    = “0.5”
-    memory = “1.5”
+    name   = "${var.resource_prefix}-mongodb"
+    image  = "mongo:latest"
+    cpu    = "0.5"
+    memory = "1.5"
     
     ports {
       port     = 27017
-      protocol = “TCP”
+      protocol = "TCP"
     }
 
     environment_variables = {
@@ -108,5 +123,11 @@ resource “azurerm_container_group” “ACI” {
 
   }
 
+}
+
+resource "null_resource" "run-script" {
+  provisioner "local-exec" {
+    command = "az webapp deployment source config --branch ${var.branch} --manual-integration --name ${azurerm_app_service.webapp.name} --repo-url ${var.repo_url} --resource-group ${azurerm_resource_group.rg.name}"
+  }
 }
 

@@ -13,19 +13,30 @@ variable "subscription_id" {
 }
 
 variable "mssql_user" {
-  description = "Azure Subscription ID to be used for billing"
-  default = mssqladmin
+  description = "Username for Admin of MSSQL Server"
+  default = "mssqladmin"
 }
 
 variable "mssql_password" {
-  description = "Azure Subscription ID to be used for billing"
+  description = "Password for Admin of MSSQL Server"
 }
 
 variable "mongodb_user" {
-  description = "Azure Subscription ID to be used for billing"
-  default = mongodbadmin
+  description = "Username for Admin of MongoDB"
+  default = "mongodbadmin"
 }
 
 variable "mongodb_password" {
-  description = "Azure Subscription ID to be used for billing"
+  description = "Password for Admin of MongoDB"
+}
+
+variable  "branch" {
+  description = "Github Branch used for deployment"
+  default = "main"
+}
+
+variable "repo_url" {
+  description = "Github Repo for WebApp deployment"
+  default = "https://github.com/microsoft/TailwindTraders-Website"
+}
 }
